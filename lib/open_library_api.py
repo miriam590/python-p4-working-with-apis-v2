@@ -9,8 +9,6 @@ class Search:
 
         search_term_formatted = search_term.replace(" ", "+")
         fields = ["title", "author_name"]
-        # formats the list into a comma separated string
-        # output: "title,author_name"
         fields_formatted = ",".join(fields)
         limit = 1
 
@@ -32,16 +30,25 @@ class Search:
         response = requests.get(URL)
         return response.json()
 
-    def get_user_search_results(self, search_term):
+    def _build_api_url(self, search_term):
         search_term_formatted = search_term.replace(" ", "+")
         fields = ["title", "author_name"]
         fields_formatted = ",".join(fields)
         limit = 1
+        return f"https://openlibrary.org/search.json?title={search_term_formatted}&fields={fields_formatted}&limit={limit}"
 
-        URL = f"https://openlibrary.org/search.json?title={search_term_formatted}&fields={fields_formatted}&limit={limit}"
+    def get_user_search_results(self, search_term):
+        if not search_term.strip():
+            return "Please enter a valid book title."
+        URL = self._build_api_url(search_term)
 
-        response = requests.get(URL).json()
-        response_formatted = f"Title: {response['docs'][0]['title']}\nAuthor: {response['docs'][0]['author_name'][0]}"
+        try:
+            response = requests.get(URL).json()
+            if response.get('numFound', 0) == 0:
+                return "No results found for the given title."
+            response_formatted = f"Title: {response['docs'][0]['title']}\nAuthor: {response['docs'][0]['author_name'][0]}"
+        except Exception as e:
+            return f"An error occurred: {str(e)}"
         return response_formatted
 
 
